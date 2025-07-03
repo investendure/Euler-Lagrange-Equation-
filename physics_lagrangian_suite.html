@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lagrangian Physics Suite</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .header {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding: 2rem;
+            background: rgba(0,0,0,0.1);
+        }
+
+        .nav-btn {
+            padding: 0.8rem 1.5rem;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .nav-btn.active {
+            background: rgba(255,255,255,0.4);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .simulation {
+            display: none;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            margin-bottom: 2rem;
+        }
+
+        .simulation.active {
+            display: block;
+        }
+
+        .simulation h2 {
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .control-group label {
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .control-group input {
+            padding: 0.5rem;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            width: 80px;
+        }
+
+        .control-group input::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        canvas {
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 10px;
+            background: rgba(0,0,0,0.3);
+        }
+
+        .equations {
+            background: rgba(0,0,0,0.3);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        .btn {
+            padding: 0.8rem 2rem;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+
+        .btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(0,0,0,0.2);
+            margin-top: 3rem;
+        }
+
+        .visualization-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .vis-card {
+            background: rgba(0,0,0,0.3);
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .nav {
+                padding: 1rem;
+            }
+            
+            .nav-btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Lagrangian Physics Suite</h1>
+        <p>Interactive Simulations Based on Euler-Lagrange Equations</p>
+    </header>
+
+    <nav class="nav">
+        <button class="nav-btn active" onclick="showSimulation('pendulum')">Double Pendulum</button>
+        <button class="nav-btn" onclick="showSimulation('orbital')">Orbital Mechanics</button>
+        <button class="nav-btn" onclick="showSimulation('brachistochrone')">Brachistochrone</button>
+        <button class="nav-btn" onclick="showSimulation('lagrangian')">Lagrangian Builder</button>
+        <button class="nav-btn" onclick="showSimulation('optimization')">Path Optimization</button>
+        <button class="nav-btn" onclick="showSimulation('field')">Field Visualization</button>
+    </nav>
+
+    <div class="container">
+        <!-- Double Pendulum Simulation -->
+        <div id="pendulum" class="simulation active">
+            <h2>Double Pendulum Simulation</h2>
+            <div class="controls">
+                <div class="control-group">
+                    <label>Length 1 (m)</label>
+                    <input type="number" id="l1" value="1.0" step="0.1">
+                </div>
+                <div class="control-group">
+                    <label>Length 2 (m)</label>
+                    <input type="number" id="l2" value="1.0" step="0.1">
+                </div>
+                <div class="control-group">
+                    <label>Mass 1 (kg)</label>
+                    <input type="number" id="m1" value="1.0" step="0.1">
+                </div>
+                <div class="control-group">
+                    <label>Mass 2 (kg)</label>
+                    <input type="number" id="m2" value="1.0" step="0.1">
+                </div>
+                <div class="control-group">
+                    <label>Initial θ₁ (°)</label>
+                    <input type="number" id="theta1" value="90" step="1">
+                </div>
+                <div class="control-group">
+                    <label>Initial θ₂ (°)</label>
+                    <input type="number" id="theta2" value="90" step="1">
+                </div>
+            </div>
+            <div class="canvas-container">
+                <canvas id="pendulumCanvas" width="600" height="400"></canvas>
+            </div>
+            <div style="text-align: center;">
+                <button class="btn" onclick="startPendulum()">Start</button>
+                <button class="btn" onclick="pausePendulum()">Pause</button>
+                <button class="btn" onclick="resetPendulum()">Reset</button>
+                <button class="btn" onclick="toggleTrail()">Toggle Trail</button>
+            </div>
+            <div class="equations">
+                <strong>Lagrangian:</strong> L = T - V = ½(m₁ + m₂)l₁²θ̇₁² + ½m₂l₂²θ̇₂² + m₂l₁l₂θ̇₁θ̇₂cos(θ₁-θ₂) + (m₁ + m₂)gl₁cos(θ₁) + m₂gl₂cos(θ₂)
+            </div>
+        </div>
+
+        <!-- Orbital Mechanics -->
+        <div id="orbital" class="simulation">
+            <h2>Orbital Mechanics</h2>
+            <div class="controls">
+                <div class="control-group">
+                    <label>Velocity X</label>
+                    <input type="number" id="velX" value="0.5" step="0.1">
+                </div>
+                <div class="control-group">
+                    <label>Velocity Y</label>
+                    <input type="number" id="velY" value="1.0" step="0.1">
+                </div>
+                <div class="control-group">
+                    <label>Mass Ratio</label>
+                    <input type="number" id="massRatio" value="1.0" step="0.1">
+                </div>
+            </div>
+            <div class="canvas-container">
+                <canvas id="orbitalCanvas" width="600" height="600"></canvas>
+            </div>
+            <div style="text-align: center;">
+                <button class="btn" onclick="startOrbital()">Start</button>
+                <button class="btn" onclick="pauseOrbital()">Pause</button>
+                <button class="btn" onclick="resetOrbital()">Reset</button>
+            </div>
+            <div class="equations">
+                <strong>Lagrangian:</strong> L = ½m(ṙ² + r²θ̇²) + GMm/r
+            </div>
+        </div>
+
+        <!-- Brachistochrone -->
+        <div id="brachistochrone" class="simulation">
+            <h2>Brachistochrone Problem</h2>
+            <div class="controls">
+                <div class="control-group">
+                    <label>End X</label>
+                    <input type="number" id="endX" value="300" step="10">
+                </div>
+                <div class="control-group">
+                    <label>End Y</label>
+                    <input type="number" id="endY" value="200" step="10">
+                </div>
+            </div>
+            <div class="canvas-container">
+                <canvas id="brachistochroneCanvas" width="600" height="400"></canvas>
+            </div>
+            <div style="text-align: center;">
+                <button class="btn" onclick="generateBrachistochrone()">Generate Cycloid</button>
+                <button class="btn" onclick="animateBrachistochrone()">Animate</button>
+                <button class="btn" onclick="comparePaths()">Compare Paths</button>
+            </div>
+            <div class="equations">
+                <strong>Functional to minimize:</strong> ∫√((1+(y')²)/(2gy)) dx
+            </div>
+        </div>
+
+        <!-- Lagrangian Builder -->
+        <div id="lagrangian" class="simulation">
+            <h2>Interactive Lagrangian Builder</h2>
+            <div class="visualization-grid">
+                <div class="vis-card">
+                    <h3>Kinetic Energy Terms</h3>
+                    <div id="kineticTerms">
+                        <button class="btn" onclick="addKineticTerm()">Add T Term</button>
+                    </div>
+                </div>
+                <div class="vis-card">
+                    <h3>Potential Energy Terms</h3>
+                    <div id="potentialTerms">
+                        <button class="btn" onclick="addPotentialTerm()">Add V Term</button>
+                    </div>
+                </div>
+            </div>
+            <div class="equations" id="lagrangianEquation">
+                <strong>Lagrangian:</strong> L = T - V = <span id="lagrangianDisplay">Click above to build your Lagrangian</span>
+            </div>
+            <div class="equations" id="eulerLagrange">
+                <strong>Euler-Lagrange Equations:</strong> <span id="equationsDisplay">Will appear here</span>
+            </div>
+        </div>
+
+        <!-- Path Optimization -->
+        <div id="optimization" class="simulation">
+            <h2>Path Optimization</h2>
+            <div class="controls">
+                <div class="control-group">
+                    <label>Obstacle Count</label>
+                    <input type="number" id="obstacleCount" value="3" min="0" max="10">
+                </div>
+            </div>
+            <div class="canvas-container">
+                <canvas id="optimizationCanvas" width="600" height="400"></canvas>
+            </div>
+            <div style="text-align: center;">
+                <button class="btn" onclick="generateObstacles()">Generate Obstacles</button>
+                <button class="btn" onclick="findOptimalPath()">Find Optimal Path</button>
+                <button class="btn" onclick="animateOptimization()">Animate Process</button>
+            </div>
+            <div class="equations">
+                <strong>Optimization:</strong> Minimize ∫√(1+(y')²) dx subject to constraints
+            </div>
+        </div>
+
+        <!-- Field Visualization -->
+        <div id="field" class="simulation">
+            <h2>Field Theory Visualization</h2>
+            <div class="controls">
+                <div class="control-group">
+                    <label>Field Type</label>
+                    <select id="fieldType" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 0.5rem; border-radius: 5px;">
+                        <option value="electric">Electric</option>
+                        <option value="gravitational">Gravitational</option>
+                        <option value="magnetic">Magnetic</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Charge/Mass</label>
+                    <input type="number" id="fieldStrength" value="1.0" step="0.1">
+                </div>
+            </div>
+            <div class="canvas-container">
+                <canvas id="fieldCanvas" width="600" height="400"></canvas>
+            </div>
+            <div style="text-align: center;">
+                <button class="btn" onclick="startFieldSimulation()">Start</button>
+                <button class="btn" onclick="addFieldSource()">Add Source</button>
+                <button class="btn" onclick="clearField()">Clear Field</button>
+            </div>
+            <div class="equations">
+                <strong>Field Lagrangian:</strong> ℒ = -¼F_μν F^μν - J_μ A^μ
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>Made by Sunset | Interactive Physics Simulations | Based on Euler-Lagrange Formalism</p>
+        <p>Download this file and deploy on Netlify for your own physics exploration!</p>
+    </footer>
+
+    <script>
+        // Global variables
+        let currentSimulation = 'pendulum';
+        let animationFrames = {};
+        let simulations = {};
+
+        // Navigation
+        function showSimulation(sim) {
+            document.querySelectorAll('.simulation').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(sim).classList.add('active');
+            event.target.classList.add('active');
+            currentSimulation = sim;
+            
+            // Stop all running animations
+            Object.values(animationFrames).forEach(id => cancelAnimationFrame(id));
+            animationFrames = {};
+        }
+
+        // Double Pendulum
+        class DoublePendulum {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.reset();
+                this.trail = [];
+                this.showTrail = false;
+                this.running = false;
+            }
+
+            reset() {
+                this.l1 = parseFloat(document.getElementById('l1').value) * 100;
+                this.l2 = parseFloat(document.getElementById('l2').value) * 100;
+                this.m1 = parseFloat(document.getElementById('m1').value);
+                this.m2 = parseFloat(document.getElementById('m2').value);
+                this.theta1 = parseFloat(document.getElementById('theta1').value) * Math.PI / 180;
+                this.theta2 = parseFloat(document.getElementById('theta2').value) * Math.PI / 180;
+                this.omega1 = 0;
+                this.omega2 = 0;
+                this.g = 9.81;
+                this.trail = [];
+                this.draw();
+            }
+
+            update() {
+                const dt = 0.01;
+                
+                // Euler-Lagrange equations for double pendulum
+                const delta = this.theta2 - this.theta1;
+                const den1 = (this.m1 + this.m2) * this.l1 - this.m2 * this.l1 * Math.cos(delta) * Math.cos(delta);
+                const den2 = (this.l2 / this.l1) * den1;
+
+                const num1 = -this.m2 * this.l1 * this.omega1 * this.omega1 * Math.sin(delta) * Math.cos(delta) +
+                             this.m2 * this.g * Math.sin(this.theta2) * Math.cos(delta) +
+                             this.m2 * this.l2 * this.omega2 * this.omega2 * Math.sin(delta) -
+                             (this.m1 + this.m2) * this.g * Math.sin(this.theta1);
+
+                const num2 = -this.m2 * this.l2 * this.omega2 * this.omega2 * Math.sin(delta) * Math.cos(delta) +
+                             (this.m1 + this.m2) * this.g * Math.sin(this.theta1) * Math.cos(delta) +
+                             (this.m1 + this.m2) * this.l1 * this.omega1 * this.omega1 * Math.sin(delta) -
+                             (this.m1 + this.m2) * this.g * Math.sin(this.theta2);
+
+                this.omega1 += (num1 / den1) * dt;
+                this.omega2 += (num2 / den2) * dt;
+                this.theta1 += this.omega1 * dt;
+                this.theta2 += this.omega2 * dt;
+            }
+
+            draw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                const centerX = this.canvas.width / 2;
+                const centerY = 50;
+                
+                const x1 = centerX + this.l1 * Math.sin(this.theta1);
+                const y1 = centerY + this.l1 * Math.cos(this.theta1);
+                const x2 = x1 + this.l2 * Math.sin(this.theta2);
+                const y2 = y1 + this.l2 * Math.cos(this.theta2);
+
+                // Trail
+                if (this.showTrail) {
+                    this.trail.push({x: x2, y: y2});
+                    if (this.trail.length > 500) this.trail.shift();
+                    
+                    this.ctx.strokeStyle = 'rgba(255, 255, 0, 0.3)';
+                    this.ctx.lineWidth = 1;
+                    this.ctx.beginPath();
+                    for (let i = 1; i < this.trail.length; i++) {
+                        this.ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                    }
+                    this.ctx.stroke();
+                }
+
+                // Pendulum arms
+                this.ctx.strokeStyle = 'white';
+                this.ctx.lineWidth = 3;
+                this.ctx.beginPath();
+                this.ctx.moveTo(centerX, centerY);
+                this.ctx.lineTo(x1, y1);
+                this.ctx.lineTo(x2, y2);
+                this.ctx.stroke();
+
+                // Masses
+                this.ctx.fillStyle = '#ff6b6b';
+                this.ctx.beginPath();
+                this.ctx.arc(x1, y1, this.m1 * 10, 0, 2 * Math.PI);
+                this.ctx.fill();
+
+                this.ctx.fillStyle = '#4ecdc4';
+                this.ctx.beginPath();
+                this.ctx.arc(x2, y2, this.m2 * 10, 0, 2 * Math.PI);
+                this.ctx.fill();
+
+                // Pivot
+                this.ctx.fillStyle = 'white';
+                this.ctx.beginPath();
+                this.ctx.arc(centerX, centerY, 5, 0, 2 * Math.PI);
+                this.ctx.fill();
+            }
+
+            animate() {
+                if (this.running) {
+                    this.update();
+                    this.draw();
+                    animationFrames.pendulum = requestAnimationFrame(() => this.animate());
+                }
+            }
+        }
+
+        // Orbital Mechanics
+        class OrbitalSystem {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.reset();
+                this.running = false;
+            }
+
+            reset() {
+                this.centerX = this.canvas.width / 2;
+                this.centerY = this.canvas.height / 2;
+                this.x = this.centerX + 100;
+                this.y = this.centerY;
+                this.vx = parseFloat(document.getElementById('velX').value);
+                this.vy = parseFloat(document.getElementById('velY').value);
+                this.GM = 1000;
+                this.trail = [];
+                this.draw();
+            }
+
+            update() {
+                const dx = this.x - this.centerX;
+                const dy = this.y - this.centerY;
+                const r = Math.sqrt(dx * dx + dy * dy);
+                
+                const ax = -this.GM * dx / (r * r * r);
+                const ay = -this.GM * dy / (r * r * r);
+                
+                this.vx += ax * 0.01;
+                this.vy += ay * 0.01;
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                this.trail.push({x: this.x, y: this.y});
+                if (this.trail.length > 1000) this.trail.shift();
+            }
+
+            draw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Central mass
+                this.ctx.fillStyle = '#ffd93d';
+                this.ctx.beginPath();
+                this.ctx.arc(this.centerX, this.centerY, 20, 0, 2 * Math.PI);
+                this.ctx.fill();
+                
+                // Trail
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                this.ctx.lineWidth = 1;
+                this.ctx.beginPath();
+                for (let i = 1; i < this.trail.length; i++) {
+                    this.ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                }
+                this.ctx.stroke();
+                
+                // Orbiting body
+                this.ctx.fillStyle = '#ff6b6b';
+                this.ctx.beginPath();
+                this.ctx.arc(this.x, this.y, 5, 0, 2 * Math.PI);
+                this.ctx.fill();
+            }
+
+            animate() {
+                if (this.running) {
+                    this.update();
+                    this.draw();
+                    animationFrames.orbital = requestAnimationFrame(() => this.animate());
+                }
+            }
+        }
+
+        // Brachistochrone
+        class Brachistochrone {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.startX = 50;
+                this.startY = 50;
+                this.endX = 350;
+                this.endY = 250;
+                this.cycloidPath = [];
+                this.animating = false;
+            }
+
+            generateCycloid() {
+                this.endX = parseFloat(document.getElementById('endX').value);
+                this.endY = parseFloat(document.getElementById('endY').value);
+                
+                this.cycloidPath = [];
+                const a = this.endY / 2; // radius parameter
+                const steps = 100;
+                
+                for (let i = 0; i <= steps; i++) {
+                    const t = (i / steps) * Math.PI;
+                    const x = this.startX + (this.endX - this.startX) * (t - Math.sin(t)) / Math.PI;
+                    const y = this.startY + a * (1 - Math.cos(t));
+                    this.cycloidPath.push({x, y, t});
+                }
+                
+                this.draw();
+            }
+
+            draw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Straight line path
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                this.ctx.lineWidth = 2;
+                this.ctx.setLineDash([5, 5]);
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.startX, this.startY);
+                this.ctx.lineTo(this.endX, this.endY);
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+                
+                // Cycloid path
+                if (this.cycloidPath.length > 0) {
+                    this.ctx.strokeStyle = '#4ecdc4';
+                    this.ctx.lineWidth = 3;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(this.cycloidPath[0].x, this.cycloidPath[0].y);
+                    for (let point of this.cycloidPath) {
+                        this.ctx.lineTo(point.x, point.y);
+                    }
+                    this.ctx.stroke();
+                }
+                
+                // Start and end points
+                this.ctx.fillStyle = '#ff6b6b';
+                this.ctx.beginPath();
+                this.ctx.arc(this.startX, this.startY, 8, 0, 2 * Math.PI);
+                this.ctx.fill();
+                
+                this.ctx.fillStyle = '#ffd93d';
+                this.ctx.beginPath();
+                this.ctx.arc(this.endX, this.endY, 8, 0, 2 * Math.PI);
+                this.ctx.fill();
+            }
+
+            animateBall() {
+                if (!this.cycloidPath.length) return;
+                
+                let step = 0;
+                const animate = () => {
+                    if (step < this.cycloidPath.length && this.animating) {
+                        this.draw();
+                        
+                        // Draw ball
+                        const point = this.cycloidPath[step];
+                        this.ctx.fillStyle = '#ff6b6b';
+                        this.ctx.beginPath();
+                        this.ctx.arc(point.x, point.y, 6, 0, 2 * Math.PI);
+                        this.ctx.fill();
+                        
+                        step++;
+                        animationFrames.brachistochrone = requestAnimationFrame(animate);
+                    } else {
+                        this.animating = false;
+                    }
+                };
+                
+                this.animating = true;
+                animate();
+            }
+        }
+
+        // Initialize simulations
+        function initializeSimulations() {
+            simulations.pendulum = new DoublePendulum(document.getElementById('pendulumCanvas'));
+            simulations.orbital = new OrbitalSystem(document.getElementById('orbitalCanvas'));
+            simulations.brachistochrone = new Brachistochrone(document.getElementById('brachistochroneCanvas'));
+        }
+
+        // Pendulum controls
+        function startPendulum() {
+            simulations.pendulum.running = true;
+            simulations.pendulum.animate();
+        }
+
+        function pausePendulum() {
+            simulations.pendulum.running = false;
+        }
+
+        function resetPendulum() {
+            simulations.pendulum.running = false;
+            simulations.pendulum.reset();
+        }
+
+        function toggleTrail() {
+            simulations.pendulum.showTrail = !simulations.pendulum.showTrail;
+            if (!simulations.pendulum.showTrail) {
+                simulations.pendulum.trail = [];
+            }
+        }
+
+        // Orbital controls
+        function startOrbital() {
+            simulations.orbital.running = true;
+            simulations.orbital.animate();
+        }
+
+        function pauseOrbital() {
+            simulations.orbital.running = false;
+        }
+
+        function resetOrbital() {
+            simulations.orbital.running = false;
+            simulations.orbital.reset();
+        }
+
+        // Brachistochrone controls
+        function generateBrachistochrone() {
+            simulations.brachistochrone.generateCycloid();
+        }
+
+        function animateBrachistochrone() {
+            simulations.brachistochrone.animateBall();
+        }
+
+        function comparePaths() {
+            // This would show time comparison between different paths
+            alert("Cycloid path is fastest! Time difference calculations would be implemented here.");
+        }
+
+        // Lagrangian Builder
+        let kineticTerms = [];
+        let potentialTerms = [];
+
+        function addKineticTerm() {
+            const term = prompt("Enter kinetic energy term (e.g., '0.5*m*v^2'):");
+            if (term) {
+                kineticTerms.push(term);
+                updateLagrangianDisplay();
+            }
+        }
+
+        function addPotentialTerm() {
+            const term = prompt("Enter potential energy term (e.g., 'm*g*h'):");
+            if (term) {
+                potentialTerms.push(term);
+                updateLagrangianDisplay();
+            }
+        }
+
+        function updateLagrangianDisplay() {
+            const kineticSum = kineticTerms.join(' + ') || '0';
+            const potentialSum = potentialTerms.join(' + ') || '0';
+            const lagrangian = `(${kineticSum}) - (${potentialSum})`;
+            
+            document.getElementById('lagrangianDisplay').textContent = lagrangian;
+            document.getElementById('equationsDisplay').textContent = 
+                "d/dt(∂L/∂q̇) - ∂L/∂q = 0 for each coordinate q";
+        }
+
+        // Path Optimization
+        let obstacles = [];
+        let optimalPath = [];
+
+        function generateObstacles() {
+            const canvas = document.getElementById('optimizationCanvas');
+            const count = parseInt(document.getElementById('obstacleCount').value);
+            obstacles = [];
+            
+            for (let i = 0; i < count; i++) {
+                obstacles.push({
+                    x: Math.random() * (canvas.width - 100) + 50,
+                    y: Math.random() * (canvas.height - 100) + 50,
+                    radius: 30 + Math.random() * 20
+                });
+            }
+            
+            drawOptimization();
+        }
+
+        function findOptimalPath() {
+            const canvas = document.getElementById('optimizationCanvas');
+            const startX = 50, startY = canvas.height / 2;
+            const endX = canvas.width - 50, endY = canvas.height / 2;
+            
+            // Simple path finding around obstacles
+            optimalPath = [{x: startX, y: startY}];
+            
+            const steps = 20;
+            for (let i = 1; i < steps; i++) {
+                const t = i / steps;
+                let x = startX + t * (endX - startX);
+                let y = startY + t * (endY - startY);
+                
+                // Avoid obstacles
+                for (let obstacle of obstacles) {
+                    const dx = x - obstacle.x;
+                    const dy = y - obstacle.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < obstacle.radius + 20) {
+                        const angle = Math.atan2(dy, dx);
+                        x = obstacle.x + Math.cos(angle) * (obstacle.radius + 25);
+                        y = obstacle.y + Math.sin(angle) * (obstacle.radius + 25);
+                    }
+                }
+                
+                optimalPath.push({x, y});
+            }
+            
+            optimalPath.push({x: endX, y: endY});
+            drawOptimization();
+        }
+
+        function animateOptimization() {
+            let step = 0;
+            const animate = () => {
+                if (step < optimalPath.length) {
+                    drawOptimization();
+                    
+                    // Highlight current point
+                    const ctx = document.getElementById('optimizationCanvas').getContext('2d');
+                    const point = optimalPath[step];
+                    ctx.fillStyle = '#ff6b6b';
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, 8, 0, 2 * Math.PI);
+                    ctx.fill();
+                    
+                    step++;
+                    animationFrames.optimization = requestAnimationFrame(animate);
+                }
+            };
+            animate();
+        }
+
+        function drawOptimization() {
+            const canvas = document.getElementById('optimizationCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw obstacles
+            ctx.fillStyle = 'rgba(255, 107, 107, 0.7)';
+            for (let obstacle of obstacles) {
+                ctx.beginPath();
+                ctx.arc(obstacle.x, obstacle.y, obstacle.radius, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+            
+            // Draw start and end
+            ctx.fillStyle = '#4ecdc4';
+            ctx.beginPath();
+            ctx.arc(50, canvas.height / 2, 10, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.fillStyle = '#ffd93d';
+            ctx.beginPath();
+            ctx.arc(canvas.width - 50, canvas.height / 2, 10, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw optimal path
+            if (optimalPath.length > 0) {
+                ctx.strokeStyle = '#4ecdc4';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(optimalPath[0].x, optimalPath[0].y);
+                for (let point of optimalPath) {
+                    ctx.lineTo(point.x, point.y);
+                }
+                ctx.stroke();
+            }
+        }
+
+        // Field Visualization
+        let fieldSources = [];
+        let fieldRunning = false;
+
+        function startFieldSimulation() {
+            fieldRunning = !fieldRunning;
+            if (fieldRunning) {
+                animateField();
+            }
+        }
+
+        function addFieldSource() {
+            const canvas = document.getElementById('fieldCanvas');
+            fieldSources.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                strength: parseFloat(document.getElementById('fieldStrength').value)
+            });
+            drawField();
+        }
+
+        function clearField() {
+            fieldSources = [];
+            fieldRunning = false;
+            const canvas = document.getElementById('fieldCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function drawField() {
+            const canvas = document.getElementById('fieldCanvas');
+            const ctx = canvas.getContext('2d');
+            const fieldType = document.getElementById('fieldType').value;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw field lines
+            const gridSize = 30;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 1;
+            
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                for (let y = 0; y < canvas.height; y += gridSize) {
+                    let fx = 0, fy = 0;
+                    
+                    // Calculate field at this point
+                    for (let source of fieldSources) {
+                        const dx = x - source.x;
+                        const dy = y - source.y;
+                        const r = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (r > 5) {
+                            const field = source.strength / (r * r);
+                            fx += field * dx / r;
+                            fy += field * dy / r;
+                        }
+                    }
+                    
+                    // Draw field vector
+                    const magnitude = Math.sqrt(fx * fx + fy * fy);
+                    if (magnitude > 0.01) {
+                        const scale = Math.min(15, magnitude * 1000);
+                        fx = fx / magnitude * scale;
+                        fy = fy / magnitude * scale;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(x + fx, y + fy);
+                        ctx.stroke();
+                        
+                        // Arrow head
+                        const angle = Math.atan2(fy, fx);
+                        ctx.beginPath();
+                        ctx.moveTo(x + fx, y + fy);
+                        ctx.lineTo(x + fx - 5 * Math.cos(angle - 0.3), y + fy - 5 * Math.sin(angle - 0.3));
+                        ctx.moveTo(x + fx, y + fy);
+                        ctx.lineTo(x + fx - 5 * Math.cos(angle + 0.3), y + fy - 5 * Math.sin(angle + 0.3));
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            // Draw sources
+            for (let source of fieldSources) {
+                ctx.fillStyle = source.strength > 0 ? '#ff6b6b' : '#4ecdc4';
+                ctx.beginPath();
+                ctx.arc(source.x, source.y, 8, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Label
+                ctx.fillStyle = 'white';
+                ctx.font = '12px Arial';
+                ctx.fillText(source.strength > 0 ? '+' : '-', source.x - 3, source.y + 4);
+            }
+        }
+
+        function animateField() {
+            if (fieldRunning) {
+                drawField();
+                animationFrames.field = requestAnimationFrame(animateField);
+            }
+        }
+
+        // Interactive canvas events
+        function setupCanvasInteractions() {
+            // Add click handlers for field canvas
+            const fieldCanvas = document.getElementById('fieldCanvas');
+            fieldCanvas.addEventListener('click', (e) => {
+                if (currentSimulation === 'field') {
+                    const rect = fieldCanvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    fieldSources.push({
+                        x: x,
+                        y: y,
+                        strength: parseFloat(document.getElementById('fieldStrength').value)
+                    });
+                    drawField();
+                }
+            });
+            
+            // Add click handler for optimization canvas
+            const optimizationCanvas = document.getElementById('optimizationCanvas');
+            optimizationCanvas.addEventListener('click', (e) => {
+                if (currentSimulation === 'optimization') {
+                    const rect = optimizationCanvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    obstacles.push({
+                        x: x,
+                        y: y,
+                        radius: 25
+                    });
+                    drawOptimization();
+                }
+            });
+        }
+
+        // Energy and phase space calculations
+        function calculateEnergy() {
+            if (currentSimulation === 'pendulum') {
+                const pendulum = simulations.pendulum;
+                const T = 0.5 * pendulum.m1 * pendulum.l1 * pendulum.l1 * pendulum.omega1 * pendulum.omega1 +
+                         0.5 * pendulum.m2 * (pendulum.l1 * pendulum.l1 * pendulum.omega1 * pendulum.omega1 +
+                                               pendulum.l2 * pendulum.l2 * pendulum.omega2 * pendulum.omega2 +
+                                               2 * pendulum.l1 * pendulum.l2 * pendulum.omega1 * pendulum.omega2 * 
+                                               Math.cos(pendulum.theta1 - pendulum.theta2));
+                
+                const V = -(pendulum.m1 + pendulum.m2) * pendulum.g * pendulum.l1 * Math.cos(pendulum.theta1) -
+                          pendulum.m2 * pendulum.g * pendulum.l2 * Math.cos(pendulum.theta2);
+                
+                return {kinetic: T, potential: V, total: T + V};
+            }
+            return {kinetic: 0, potential: 0, total: 0};
+        }
+
+        // Physics constants and utilities
+        const PhysicsConstants = {
+            G: 6.67430e-11,
+            c: 299792458,
+            h: 6.62607015e-34,
+            k: 1.380649e-23,
+            e: 1.602176634e-19
+        };
+
+        function formatScientific(num, precision = 3) {
+            return num.toExponential(precision);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                switch(currentSimulation) {
+                    case 'pendulum':
+                        if (simulations.pendulum.running) {
+                            pausePendulum();
+                        } else {
+                            startPendulum();
+                        }
+                        break;
+                    case 'orbital':
+                        if (simulations.orbital.running) {
+                            pauseOrbital();
+                        } else {
+                            startOrbital();
+                        }
+                        break;
+                }
+            }
+            
+            if (e.code === 'KeyR') {
+                switch(currentSimulation) {
+                    case 'pendulum':
+                        resetPendulum();
+                        break;
+                    case 'orbital':
+                        resetOrbital();
+                        break;
+                }
+            }
+        });
+
+        // Performance monitoring
+        let lastFrameTime = 0;
+        let fps = 0;
+
+        function updateFPS() {
+            const now = performance.now();
+            const delta = now - lastFrameTime;
+            fps = Math.round(1000 / delta);
+            lastFrameTime = now;
+        }
+
+        // Responsive design adjustments
+        function adjustCanvasSizes() {
+            const canvases = document.querySelectorAll('canvas');
+            canvases.forEach(canvas => {
+                const container = canvas.parentElement;
+                const containerWidth = container.clientWidth;
+                
+                if (containerWidth < 600) {
+                    canvas.width = containerWidth - 40;
+                    canvas.height = (canvas.height / canvas.width) * (containerWidth - 40);
+                }
+            });
+        }
+
+        // Advanced mathematical functions
+        function runge_kutta_4(f, y0, t0, t1, n) {
+            const h = (t1 - t0) / n;
+            const t = [t0];
+            const y = [y0];
+            
+            for (let i = 0; i < n; i++) {
+                const k1 = f(t[i], y[i]);
+                const k2 = f(t[i] + h/2, y[i] + h * k1 / 2);
+                const k3 = f(t[i] + h/2, y[i] + h * k2 / 2);
+                const k4 = f(t[i] + h, y[i] + h * k3);
+                
+                y.push(y[i] + h * (k1 + 2*k2 + 2*k3 + k4) / 6);
+                t.push(t[i] + h);
+            }
+            
+            return {t, y};
+        }
+
+        // Export functionality
+        function exportSimulationData() {
+            const data = {
+                simulation: currentSimulation,
+                timestamp: new Date().toISOString(),
+                parameters: {},
+                results: {}
+            };
+            
+            // Add simulation-specific data
+            switch(currentSimulation) {
+                case 'pendulum':
+                    data.parameters = {
+                        l1: simulations.pendulum.l1,
+                        l2: simulations.pendulum.l2,
+                        m1: simulations.pendulum.m1,
+                        m2: simulations.pendulum.m2
+                    };
+                    data.results.trail = simulations.pendulum.trail;
+                    break;
+            }
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `physics_simulation_${currentSimulation}_${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Initialize everything when page loads
+        window.addEventListener('load', () => {
+            initializeSimulations();
+            setupCanvasInteractions();
+            adjustCanvasSizes();
+            
+            // Add export button to footer
+            const footer = document.querySelector('.footer');
+            const exportBtn = document.createElement('button');
+            exportBtn.className = 'btn';
+            exportBtn.textContent = 'Export Data';
+            exportBtn.onclick = exportSimulationData;
+            footer.appendChild(exportBtn);
+            
+            // Welcome message
+            console.log('🚀 Lagrangian Physics Suite loaded successfully!');
+            console.log('💡 Use spacebar to start/pause simulations, R to reset');
+            console.log('🎯 Made by Sunset - Explore the beauty of physics!');
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', adjustCanvasSizes);
+
+        // Add some Easter eggs
+        let clickCount = 0;
+        document.querySelector('.header h1').addEventListener('click', () => {
+            clickCount++;
+            if (clickCount === 5) {
+                document.body.style.filter = 'hue-rotate(180deg)';
+                setTimeout(() => {
+                    document.body.style.filter = 'none';
+                }, 2000);
+                clickCount = 0;
+            }
+        });
+    </script>
+</body>
+</html>
